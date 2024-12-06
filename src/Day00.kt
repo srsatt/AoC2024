@@ -1,7 +1,7 @@
 fun main() {
     fun part1(input: List<String>): Int {
         val res = input.size
-        println("""res of the part 2 is: $res""")
+        println("""res of the part 1 is: $res""")
         return res
     }
 
