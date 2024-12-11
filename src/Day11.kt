@@ -1,23 +1,23 @@
 fun main() {
-    fun mutate(value: ULong): List<ULong> {
-        if (value == 0UL) {
-            return listOf(1U)
+    fun mutate(value: Long): List<Long> {
+        if (value == 0L) {
+            return listOf(1L)
         }
         val stringed = value.toString()
         if (stringed.length % 2 == 0) {
             return listOf(
-                stringed.take(stringed.length / 2).toULong(),
-                stringed.takeLast(stringed.length / 2).toULong()
+                stringed.take(stringed.length / 2).toLong(),
+                stringed.takeLast(stringed.length / 2).toLong()
             )
         }
-        return listOf(value * 2024U)
+        return listOf(value * 2024L)
     }
 
-    val cache = mutableMapOf<Pair<Int, ULong>, List<ULong>>()
+    val cache = mutableMapOf<Pair<Int, Long>, List<Long>>()
 
-    fun mutateN(value: ULong, n: Int): List<ULong> {
+    fun mutateN(value: Long, n: Int): List<Long> {
         return cache.getOrPut(Pair(n, value)) {
-            var res = listOf<ULong>(value)
+            var res = listOf<Long>(value)
             for (i in 1..n) {
                 res = res.flatMap { mutate(it) }
             }
@@ -25,10 +25,9 @@ fun main() {
         }
     }
 
-    fun mutateDistinctN(list: List<Pair<Long, ULong>>, n: Int): List<Pair<Long, ULong>> {
+    fun mutateDistinctN(list: List<Pair<Long, Long>>, n: Int): List<Pair<Long, Long>> {
         val mutatedValues = list.map { it.second }.map { mutateN(it, n) }
-        val res = mutableMapOf<ULong, Long>()
-        println("max value is ${list.maxOf { it.second }}")
+        val res = mutableMapOf<Long, Long>()
         mutatedValues.zip(list.map { it.first }).forEach { (mutated, count) ->
             mutated.forEach { res.compute(it) { _, v -> v?.plus(count) ?: count } }
         }
@@ -37,7 +36,7 @@ fun main() {
 
 
     fun part1(input: List<String>): Int {
-        var stones = input[0].split(" ").map { it.toULong() }
+        var stones = input[0].split(" ").map { it.toLong() }
         stones = stones.flatMap { mutateN(it, 25) }
         val res = stones.size
         println("""res of the part 1 is: $res""")
@@ -45,10 +44,9 @@ fun main() {
     }
 
     fun part2(input: List<String>): Long {
-        var stones = input[0].split(" ").map { Pair(1L, it.toULong()) }
-        for (i in 1..5) {
-            println("step $i")
-            stones = mutateDistinctN(stones, 15)
+        var stones = input[0].split(" ").map { Pair(1L, it.toLong()) }
+        for (i in 1..15) {
+            stones = mutateDistinctN(stones, 5)
             val size = stones.size
             println("step $i: $size")
         }
