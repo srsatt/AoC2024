@@ -1,16 +1,25 @@
+import kotlin.math.floor
+import kotlin.math.log10
+
 fun main() {
+
+    val cacheV = mutableMapOf<Long, List<Long>>()
     fun mutate(value: Long): List<Long> {
-        if (value == 0L) {
-            return listOf(1L)
+        return cacheV.getOrPut(value) {
+
+            if (value == 0L) {
+                return listOf(1L)
+            }
+            val digits = (floor(log10(value.toDouble())) + 1).toInt()
+            if (digits % 2 == 0) {
+                val powered = Math.pow(10.0, (digits / 2).toDouble())
+                val modValue = (value % powered).toLong()
+                return listOf(
+                    modValue, ((value - modValue) / powered).toLong(),
+                )
+            }
+            return listOf(value * 2024L)
         }
-        val stringed = value.toString()
-        if (stringed.length % 2 == 0) {
-            return listOf(
-                stringed.take(stringed.length / 2).toLong(),
-                stringed.takeLast(stringed.length / 2).toLong()
-            )
-        }
-        return listOf(value * 2024L)
     }
 
     val cache = mutableMapOf<Pair<Int, Long>, List<Long>>()
@@ -25,13 +34,22 @@ fun main() {
         }
     }
 
-    fun mutateDistinctN(list: List<Pair<Long, Long>>, n: Int): List<Pair<Long, Long>> {
-        val mutatedValues = list.map { it.second }.map { mutateN(it, n) }
-        val res = mutableMapOf<Long, Long>()
-        mutatedValues.zip(list.map { it.first }).forEach { (mutated, count) ->
-            mutated.forEach { res.compute(it) { _, v -> v?.plus(count) ?: count } }
+    fun updateResult(res: MutableMap<Long, Long>, values: List<Long>, count: Long) {
+        values.forEach { value ->
+            res.compute(value) { _, existing -> existing?.plus(count) ?: count }
         }
-        return res.map { Pair(it.value, it.key) }
+    }
+
+    // Main function refactored
+    fun mutateDistinctN(list: List<Pair<Long, Long>>, n: Int): List<Pair<Long, Long>> {
+        val mutatedValuesWithCounts = list.map { it.first to mutateN(it.second, n) }
+        val result = mutableMapOf<Long, Long>()
+
+        mutatedValuesWithCounts.forEach { (count, mutatedValues) ->
+            updateResult(result, mutatedValues, count)
+        }
+
+        return result.map { Pair(it.value, it.key) }
     }
 
 
@@ -45,8 +63,8 @@ fun main() {
 
     fun part2(input: List<String>): Long {
         var stones = input[0].split(" ").map { Pair(1L, it.toLong()) }
-        for (i in 1..15) {
-            stones = mutateDistinctN(stones, 5)
+        for (i in 1..25) {
+            stones = mutateDistinctN(stones, 3)
             val size = stones.size
             println("step $i: $size")
         }
