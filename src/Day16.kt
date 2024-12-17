@@ -14,9 +14,6 @@ fun main() {
         error("no start found")
     }
 
-    fun getMetric(stack: List<Char>): Int {
-        return stack.sumOf { if (it == 'F') 1 else 1000.toInt() }
-    }
 
     data class Moment(
         val coord: Pair<Int, Int>,
@@ -33,11 +30,12 @@ fun main() {
 
 
         val start = findField(field, 'S')
-        val end = findField(field, 'E')
 
 
-        var edges = setOf<Moment>(Moment(start, Pair(0, 1), setOf(start)))
+        var edges = setOf(Moment(start, Pair(0, 1), setOf(start)))
         val records = mutableMapOf<Pair<Int, Int>, Record>()
+
+        records[start] = Record(0, mutableSetOf(start))
 
         while (edges.isNotEmpty()) {
             val newEdges = edges.flatMap { edge ->
@@ -46,12 +44,7 @@ fun main() {
                     val nextValue = field[next.first][next.second]
                     nextValue != '#'
                 }.map {
-                    val s = edge.direction.first * it.second - edge.direction.second * it.first
-                    val step = if (s > 0) "LF" else if (s < 0) "RF" else "F"
                     val next = edge.coord.first + it.first to edge.coord.second + it.second
-                    if (next == end) {
-                        println("found end in map!")
-                    }
                     Moment(
                         next,
                         it,
@@ -60,19 +53,15 @@ fun main() {
                     )
                 }.filter {
                     val curr = records[it.coord]
-                    if (it.coord == end) {
-                        println("updating end value $curr")
-                    }
+
                     if (curr == null) {
                         records[it.coord] = Record(it.weight, it.visited.toMutableSet())
-                        if (it.coord == end) println("found end!")
                         true
                     } else {
                         if (it.weight < curr.value) {
                             records[it.coord] = Record(it.weight, it.visited.toMutableSet())
                             true
-                        } else if (it.weight == curr.value) {
-                            println("updating weight ${it.coord} to ${it.weight}")
+                        } else if (it.weight == curr.value || (it.weight - curr.value == 1000) && field[it.coord.first + it.direction.first][it.coord.second + it.direction.second] != '#') {
                             records[it.coord]!!.visited.addAll(it.visited)
                             true
                         } else {
@@ -94,7 +83,7 @@ fun main() {
 
         val end = findField(parse(input), 'E')
         val res = records[end]?.value ?: error("no end found")
-        println("""res of the part 1 is: ${res}""")
+        println("""res of the part 1 is: $res""")
 
         return res
     }
@@ -103,30 +92,22 @@ fun main() {
         val records = solve(input)
 
         val res = mutableSetOf<Pair<Int, Int>>()
-        var curr = records[findField(parse(input), 'E')]!!.visited
-        while (curr.isNotEmpty()) {
-            val new = curr.flatMap { records[it]!!.visited }.toSet().filter { it !in res }
-            println("curr! ${curr.size} new! ${new.size}")
-            new.forEach {
-                res.add(it)
-            }
-            curr = new.toMutableSet()
-        }
-
+        val curr = records[findField(parse(input), 'E')]!!.visited
         input.forEachIndexed { i, s ->
             s.mapIndexed { j, c ->
                 if (res.contains(i to j)) 'O' else c
             }.joinToString("").println()
         }
 
-        println("""res of the part 2 is: ${res.size}""")
-        return res.size
+        println("""res of the part 2 is: ${curr.size}""")
+        return curr.size
     }
 
     // test if implementation meets criteria from the description, like:
-    val testInput = readInput("Day16_test")
-    check(part1(testInput) == 7036)
-    check(part2(testInput) == 45)
+    val testInput1 = readInput("Day16_test1")
+    val testInput2 = readInput("Day16_test2")
+    check(part2(testInput1) == 64)
+    check(part2(testInput2) == 45)
 
     val input = readInput("Day16")
     part1(input).println()
